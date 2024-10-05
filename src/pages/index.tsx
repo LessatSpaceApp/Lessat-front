@@ -1,6 +1,5 @@
 import { useState } from "react";
-import Button from "@/components/ui/button";
-import Label from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import Login from "@/components/login/login/login";
 
 export default function Component() {
