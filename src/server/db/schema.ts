@@ -134,5 +134,10 @@ export const reminders = createTable("reminders", {
   latitude: numeric("latitude"),
   longitude: numeric("longitude"),
   altitude: numeric("altitude"),
+  satellite: text("satellite"),
   sent: integer("sent", { mode: "boolean" }),
 });
+
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  user: one(users, { fields: [reminders.userId], references: [users.id] }),
+}));
