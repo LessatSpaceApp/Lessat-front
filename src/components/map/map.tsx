@@ -30,6 +30,7 @@ import {
   Bell,
   X,
   SearchCheck,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -87,6 +88,8 @@ export default function LandsatComparison() {
     landsat8: "",
     landsat9: "",
   });
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false); // Loading state
+
 
   const handleSetLocation = async (e) => {
     e.preventDefault();
@@ -123,22 +126,26 @@ export default function LandsatComparison() {
 
   const getUserLocation = () => {
     if ("geolocation" in navigator) {
+      setIsLoadingLocation(true); // Set loading to true
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setTargetLocation({ lat: latitude, lng: longitude });
+          setIsLoadingLocation(false); // Set loading to false when done
           console.log(
             `User's location: Latitude: ${latitude}, Longitude: ${longitude}`,
           );
         },
         (error) => {
           console.error("Error getting user location:", error);
+          setIsLoadingLocation(false); // Set loading to false on error
         },
       );
     } else {
       console.log("Geolocation is not available in this browser");
     }
   };
+
 
   const toggleDropPinMode = () => {
     setIsDropPinMode(!isDropPinMode);
@@ -251,32 +258,26 @@ export default function LandsatComparison() {
 
   return (
     <div className="flex h-screen flex-col lg:flex-row">
-      <div className="relative h-1/2 w-full lg:h-full lg:w-2/3">
-        <MapContainer
-          center={[targetLocation.lat, targetLocation.lng]}
-          zoom={13}
-          style={{ height: "100%", width: "100%" }}
-          zoomControl={false}
-          className="relative z-10"
-        >
-          <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <Marker
-            position={[targetLocation.lat, targetLocation.lng]}
-            icon={customPinIcon}
-          >
-            <Popup>
-              Target Location <br />
-              Lat: {targetLocation.lat.toFixed(4)}, Lng:{" "}
-              {targetLocation.lng.toFixed(4)}
-            </Popup>
-          </Marker>
-          <MapClickHandler
-            onLocationChange={handleMapClick}
-            isDropPinMode={isDropPinMode}
-          />
-        </MapContainer>
-      </div>
+    <div className="relative h-1/2 w-full lg:h-full lg:w-2/3">
+      <MapContainer
+        center={[targetLocation.lat, targetLocation.lng]}
+        zoom={13}
+        style={{ height: "100%", width: "100%" }}
+        zoomControl={false}
+        className="relative z-10"
+      >
+        <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
+          <Popup>
+            Target Location <br />
+            Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
+          </Popup>
+        </Marker>
+      </MapContainer>
+    </div>
+
+      
       <div className="flex w-full flex-col space-y-4 overflow-y-auto bg-black p-4 lg:w-1/3">
         {showError && (
           <Alert variant="destructive">
@@ -330,13 +331,21 @@ export default function LandsatComparison() {
           </Button>
         </form>
         <div className="flex space-x-2">
-          <Button
-            onClick={getUserLocation}
-            className="flex-1 bg-pink-500 text-white hover:bg-pink-600"
-          >
-            <Crosshair className="mr-2 h-5 w-5" />
-            Use My Location
-          </Button>
+
+        <Button onClick={getUserLocation} className="flex-1 bg-pink-500 text-white hover:bg-pink-600">
+          {isLoadingLocation ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Getting Location...
+            </>
+          ) : (
+            <>
+              <Crosshair className="mr-2 h-5 w-5" />
+              Use My Location
+            </>
+          )}
+        </Button>
+ 
           <Button
             onClick={toggleDropPinMode}
             className={`flex-1 bg-pink-500 text-white hover:bg-pink-600 ${isDropPinMode ? "ring-2 ring-white" : ""}`}
@@ -347,7 +356,7 @@ export default function LandsatComparison() {
         </div>
         <div>
           <h2 className="mb-4 text-center text-2xl font-bold text-pink-500">
-            Lead Time
+            Lead Time for notifications
           </h2>
           <Input
             type="number"
