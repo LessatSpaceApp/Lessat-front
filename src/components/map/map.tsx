@@ -1,15 +1,17 @@
 "use client"
 
-import { useState,useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Crosshair, Search, MapPin } from 'lucide-react'
-import { useGeolocation } from '@uidotdev/usehooks'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Crosshair, Search, MapPin, Bell, X, CheckCircle } from 'lucide-react'
+import { format } from 'date-fns'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
-// This component will update the map view when coordinates change
 function ChangeView({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -18,7 +20,6 @@ function ChangeView({ center }) {
   return null;
 }
 
-// Component to handle map clicks
 function MapClickHandler({ onLocationChange, isDropPinMode }) {
   useMapEvents({
     click(e) {
@@ -30,7 +31,6 @@ function MapClickHandler({ onLocationChange, isDropPinMode }) {
   return null;
 }
 
-// Custom pin icon
 const customPinIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F3A7BD" width="36px" height="36px">
@@ -43,40 +43,59 @@ const customPinIcon = new L.Icon({
 })
 
 export default function LandsatComparison() {
-  const [targetLocation, setTargetLocation] = useState({ lat: 25.7617, lng: -80.1918 }) // Miami coordinates
+  const [targetLocation, setTargetLocation] = useState({ lat: 25.7617, lng: -80.1918 })
   const [locationName, setLocationName] = useState('')
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
   const [isDropPinMode, setIsDropPinMode] = useState(false)
-
-  // Use useGeolocation hook to get user's current location
-  const geolocation = useGeolocation();
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
+  const [dates, setDates] = useState([])
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+  const [showError, setShowError] = useState(false) // Estado para la alerta de error
+  const [errorMessage, setErrorMessage] = useState('') // Mensaje de error dinámico
+  const [showSuccess, setShowSuccess] = useState(false) // Estado para la alerta de éxito
 
   const handleSetLocation = async (e) => {
     e.preventDefault()
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`)
-      const data = await response.json()
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0]
-        const newLocation = { lat: parseFloat(lat), lng: parseFloat(lon) }
-        setTargetLocation(newLocation)
-        console.log(`Latitude: ${newLocation.lat}, Longitude: ${newLocation.lng}`)
+    if (latitude && longitude) {
+      const lat = parseFloat(latitude)
+      const lng = parseFloat(longitude)
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setTargetLocation({ lat, lng })
+        console.log(`Set location to Latitude: ${lat}, Longitude: ${lng}`)
       } else {
-        console.log('Location not found')
+        console.log('Invalid coordinates')
       }
-    } catch (error) {
-      console.error('Error fetching location:', error)
+    } else if (locationName) {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`)
+        const data = await response.json()
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0]
+          const newLocation = { lat: parseFloat(lat), lng: parseFloat(lon) }
+          setTargetLocation(newLocation)
+          console.log(`Latitude: ${newLocation.lat}, Longitude: ${newLocation.lng}`)
+        } else {
+          console.log('Location not found')
+        }
+      } catch (error) {
+        console.error('Error fetching location:', error)
+      }
     }
   }
 
-  const handleUserLocation = () => {
-    if (geolocation.latitude && geolocation.longitude) {
-      setTargetLocation({
-        lat: geolocation.latitude,
-        lng: geolocation.longitude
+  const getUserLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords
+        setTargetLocation({ lat: latitude, lng: longitude })
+        console.log(`User's location: Latitude: ${latitude}, Longitude: ${longitude}`)
+      }, (error) => {
+        console.error('Error getting user location:', error)
       })
-      console.log(`User's location: Latitude: ${geolocation.latitude}, Longitude: ${geolocation.longitude}`)
-    } else if (geolocation.error) {
-      console.error('Error getting user location:', geolocation.error)
+    } else {
+      console.log('Geolocation is not available in this browser')
     }
   }
 
@@ -92,44 +111,158 @@ export default function LandsatComparison() {
     }
   }
 
+  const handleDateSubmit = (e) => {
+    e.preventDefault()
+    const newDate = new Date(`${selectedDate}T${selectedTime}`)
+    setDates([...dates, newDate])
+    setSelectedDate('')
+    setSelectedTime('')
+  }
+
+  const removeDate = (index) => {
+    setDates(dates.filter((_, i) => i !== index))
+  }
+
+  // Function to handle sending all data as JSON
+  const handleSendData = () => {
+    const hasCoordinates = targetLocation.lat && targetLocation.lng;
+    const hasDates = dates.length > 0;
+
+    if (!hasCoordinates || !hasDates) {
+      setErrorMessage('Debe proporcionar una ubicación y al menos una fecha.');
+      setShowError(true);
+      return;
+    }
+
+    const data = {
+      targetLocation,
+      dates: dates.map(date => format(date, 'yyyy-MM-dd HH:mm')),
+    }
+
+    console.log('Sending data as JSON:', JSON.stringify(data, null, 2));
+    setShowError(false); // Ocultar alerta de error si es que se estaba mostrando
+    setShowSuccess(true); // Mostrar la alerta de éxito
+  }
+
   return (
-    <div className="relative h-screen w-full">
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex items-center space-x-2 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
-        <form onSubmit={handleSetLocation} className="flex items-center space-x-2">
+    <div className="flex h-screen">
+      <div className="w-2/3 relative">
+        <MapContainer center={[targetLocation.lat, targetLocation.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className="relative z-10">
+          <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
+            <Popup>
+              Target Location <br />
+              Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
+            </Popup>
+          </Marker>
+          <MapClickHandler onLocationChange={handleMapClick} isDropPinMode={isDropPinMode} />
+        </MapContainer>
+      </div>
+      <div className="w-1/3 bg-white p-4 overflow-y-auto flex flex-col space-y-4">
+        {showError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        {showSuccess && (
+          <Alert variant="success">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Datos Enviados</AlertTitle>
+            <AlertDescription>
+              Los datos han sido enviados exitosamente.
+            </AlertDescription>
+          </Alert>
+        )}
+        <form onSubmit={handleSetLocation} className="space-y-2">
           <Input 
             type="text" 
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
             placeholder="Enter location name" 
-            required 
-            className="bg-white text-black border-pink-500 w-64 h-10" 
+            className="bg-white text-black border-pink-500" 
           />
-          <Button type="submit" className="bg-pink-500 text-white hover:bg-pink-600 h-10 px-4">
-            <Search className="h-5 w-5" />
-          </Button>
+          <h2 className="text-2xl font-bold text-center mb-4 text-pink-500">Or</h2>
+          <div className="flex space-x-2">
+            <Input 
+              type="text" 
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              placeholder="Latitude" 
+              className="bg-white text-black border-pink-500 w-1/2" 
+            />
+            <Input 
+              type="text" 
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              placeholder="Longitude" 
+              className="bg-white text-black border-pink-500 w-1/2" 
+            />
+          </div>
+          <div className="flex justify-between">
+            <Button type="submit" className="w-full bg-pink-500 text-white">
+              Set Location
+            </Button>
+          </div>
         </form>
-        <Button onClick={handleUserLocation} className="bg-pink-500 text-white hover:bg-pink-600 h-10 px-4">
-          <Crosshair className="h-5 w-5" />
-        </Button>
-        <Button 
-          onClick={toggleDropPinMode} 
-          className={`bg-pink-500 text-white hover:bg-pink-600 h-10 px-4 ${isDropPinMode ? 'ring-2 ring-white' : ''}`}
-        >
-          <MapPin className="h-5 w-5" />
+        <div className="flex items-center space-x-2">
+          <Button onClick={getUserLocation} className="bg-pink-500 text-white">
+            Get Current Location
+          </Button>
+          <Button onClick={toggleDropPinMode} className={`bg-pink-500 text-white ${isDropPinMode ? 'bg-red-500' : ''}`}>
+            {isDropPinMode ? <X className="mr-2" /> : <MapPin className="mr-2" />} {isDropPinMode ? 'Cancel Pin Drop' : 'Drop Pin'}
+          </Button>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-pink-500 text-white w-full">Add Dates</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Dates</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleDateSubmit}>
+                  <div className="flex space-x-2">
+                    <Input 
+                      type="date" 
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-white text-black border-pink-500 w-1/2" 
+                    />
+                    <Input 
+                      type="time" 
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      className="bg-white text-black border-pink-500 w-1/2" 
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-pink-500 text-white mt-2">
+                    Add Date
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <ul>
+              {dates.map((date, index) => (
+                <li key={index} className="flex justify-between items-center border-b border-gray-300 py-1">
+                  {format(date, 'yyyy-MM-dd HH:mm')}
+                  <Button onClick={() => removeDate(index)} className="bg-pink-500 text-white hover:bg-red-600 p-1">
+                  <X className="h-4 w-4" />
+                </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <Button onClick={handleSendData} className="w-full bg-pink-500 text-white">
+          Send Data
         </Button>
       </div>
-      
-      <MapContainer center={[targetLocation.lat, targetLocation.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-        <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
-          <Popup>
-            Target Location <br />
-            Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
-          </Popup>
-        </Marker>
-        <MapClickHandler onLocationChange={handleMapClick} isDropPinMode={isDropPinMode} />
-      </MapContainer>
     </div>
   )
 }
+
