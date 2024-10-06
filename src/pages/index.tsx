@@ -26,19 +26,14 @@ export default function Component() {
         <div className="max-w-md text-center">
           <h1 className="mb-6 text-4xl font-extrabold text-black">Lessat</h1>
           <p className="mb-8 text-xl text-gray-700">
-          Datos satelitales, trabajo inteligente
-Accede a información precisa de tu ubicación todos los días y mejora tu trabajo
-¡Explora Lessat y haz que la tecnología espacial trabaje para ti!
+          Satellite data, smarter work.
+Access precise daily information about your location and improve your work. Simply open Lessat, select your area and receive a notification about the day and time the satellites Lansat 8 or Landsat 9 pass over your location to get data directly to your device. 
+
           </p>
-          <p className="text-lg text-gray-600">
-            Join us in our journey to bring world-class soccer to Miami and
-            create unforgettable moments on and off the pitch.
+          <p className="text-xl text-gray-700">
+          Explore Lessat and let space technology work for you!
           </p>
-          <div className="mt-8">
-            <Button className="bg-black text-white hover:bg-gray-800">
-              Learn More
-            </Button>
-          </div>
+ 
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ const queryClient = new QueryClient();
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <div className={GeistSans.className}>
-      <div className="pattern bg-gray-900">
+      <div className="pattern bg-black">
         <QueryClientProvider client={queryClient}>
           <SessionProvider>
             <Navbar />
