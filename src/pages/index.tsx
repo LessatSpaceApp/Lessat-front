@@ -4,8 +4,8 @@ import NoSsr from "@/components/NoSsr";
 
 export default function Component() {
   return (
-    <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      Login Section
+<div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+      {/* Login Section */}
       <div className="flex items-center justify-center bg-black p-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
@@ -26,8 +26,9 @@ export default function Component() {
         <div className="max-w-md text-center">
           <h1 className="mb-6 text-4xl font-extrabold text-black">Lessat</h1>
           <p className="mb-8 text-xl text-gray-700">
-            We are more than just a soccer team. We are a movement, a culture,
-            and a family united by our passion for the beautiful game.
+          Datos satelitales, trabajo inteligente
+Accede a información precisa de tu ubicación todos los días y mejora tu trabajo
+¡Explora Lessat y haz que la tecnología espacial trabaje para ti!
           </p>
           <p className="text-lg text-gray-600">
             Join us in our journey to bring world-class soccer to Miami and
