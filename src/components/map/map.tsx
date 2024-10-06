@@ -77,7 +77,7 @@ export default function LandsatComparison() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [isDropPinMode, setIsDropPinMode] = useState(false);
-  const [leadTime, setLeadTime] = useState(""); // lead time in days
+  const [leadTime, setLeadTime] = useState("1"); // lead time in days
   const [dates, setDates] = useState([]);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -227,6 +227,13 @@ export default function LandsatComparison() {
       lead: number;
       satellite: string;
     }) => {
+      console.log({
+        latitude,
+        longitude,
+        time,
+        lead,
+        satellite,
+      });
       await axios.post("/api/schedule", {
         latitude,
         longitude,
@@ -369,8 +376,8 @@ export default function LandsatComparison() {
             <Button
               onClick={() =>
                 setNotificationMutation.mutate({
-                  latitude,
-                  longitude,
+                  latitude: targetLocation.lat.toString(),
+                  longitude: targetLocation.lng.toString(),
                   lead: parseFloat(leadTime),
                   satellite: "landsat_8",
                   time: new Date(landsatData.landsat8).getTime(),
@@ -392,8 +399,8 @@ export default function LandsatComparison() {
             <Button
               onClick={() =>
                 setNotificationMutation.mutate({
-                  latitude,
-                  longitude,
+                  latitude: targetLocation.lat.toString(),
+                  longitude: targetLocation.lng.toString(),
                   lead: parseFloat(leadTime),
                   satellite: "landsat_9",
                   time: new Date(landsatData.landsat9).getTime(),

@@ -23,7 +23,7 @@ export default async function handler(
       },
     });
     console.log({ schedules });
-    await Promise.allSettled(
+    const settled = await Promise.allSettled(
       schedules.map(async (s) => {
         await sendMail(s);
         await tx
@@ -32,6 +32,7 @@ export default async function handler(
           .where(eq(reminders.id, s.id));
       }),
     );
+    // console.log(settled);
   });
 
   return res.status(200).send("sent");
@@ -46,36 +47,39 @@ async function sendMail(details: Schedule) {
     parseFloat(details.altitude!),
     details.date.getTime(),
   );
+  console.log(loc);
+  console.log(details);
   switch (details.type) {
     case "tomorrow":
-      subject = `${details.satellite} pasará por tu ubicación pronto`;
-      text = `${details.satellite} pasará por tu ubicación:
+      subject = `${details.satellite} scan is near`;
+      text = `${details.satellite} will pass above your location:
 
 LAT: ${details.latitude}
 LON: ${details.longitude}
 
-en ${timeConverter(loc[details.type as "landsat_8" | "landsat_9"]!.startUTC)}
+Estimated time: ${timeConverter(loc[details.satellite as "landsat_8" | "landsat_9"]!.startUTC)}
 
-preparate para tomar tus mediciones
+Prepare to take measurments!
 `;
       break;
     case "near":
-      subject = `${details.satellite} pasará por tu ubicación pronto`;
-      text = `${details.satellite} pasará por tu ubicación:
+      subject = `${details.satellite} is near`;
+      text = `${details.satellite} will be near your location soon:
 
 LAT: ${details.latitude}
 LON: ${details.longitude}
 
-en ${timeConverter(loc[details.type as "landsat_8" | "landsat_9"]!.startUTC)}
+Estimated time: ${timeConverter(loc[details.satellite as "landsat_8" | "landsat_9"]!.startUTC)}
 
-preparate para tomar tus mediciones
+Prepare to take measurements.
 `;
       break;
     case "data_ready":
-      subject = `Datos de ${details.satellite}`;
-      text = `Los datos de ${details.satellite} ya están disponibles!
+      subject = `Data from ${details.satellite}`;
+      text = `The data from ${details.satellite} is already available!
 
-Puedes verlos aquí: ${"example url"}`;
+Check it out here: ${"example url"}
+`;
       break;
     default:
       return;

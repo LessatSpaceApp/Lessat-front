@@ -8,13 +8,15 @@ export default async function handler(
   res: NextApiResponse,
 ) {
   const session = await getServerAuthSession({ req, res });
-  await db.insert(reminders).values([
+  const date = new Date(req.body.time);
+  const schedules = [
     {
       latitude: req.body.latitude,
       longitude: req.body.longitude,
       type: "tomorrow",
       userId: session?.user.id ?? "3dc1cfa0-0ae7-4de6-949e-2355d563d6ee",
-      date: new addDays(Date(req.body.date), -1),
+      satellite: req.body.satellite,
+      date: addDays(date, -req.body.lead),
       sent: false,
     },
     {
@@ -22,7 +24,8 @@ export default async function handler(
       longitude: req.body.longitude,
       type: "near",
       userId: session?.user.id ?? "3dc1cfa0-0ae7-4de6-949e-2355d563d6ee",
-      date: new Date(req.body.date),
+      satellite: req.body.satellite,
+      date: date,
       sent: false,
     },
     {
@@ -30,14 +33,17 @@ export default async function handler(
       longitude: req.body.longitude,
       type: "data_ready",
       userId: session?.user.id ?? "3dc1cfa0-0ae7-4de6-949e-2355d563d6ee",
-      date: new addDays(Date(req.body.date), 1),
+      satellite: req.body.satellite,
+      date: addDays(date, 1),
       sent: false,
     },
-  ]);
-  return res.status(200).send();
+  ];
+  console.log(schedules);
+  await db.insert(reminders).values(schedules);
+  return res.status(200).send("");
 }
 
-function addDays(date, days) {
+function addDays(date: Date, days: number) {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
