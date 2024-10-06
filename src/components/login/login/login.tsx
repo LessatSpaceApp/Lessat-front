@@ -12,11 +12,11 @@ export default function Login() {
         {session ? (
           <>
             <h2 className="text-xl text-pink-500 font-bold mb-4 text-center">
-              Welcome, {session.user.email}!
+              Your user, {session.user.email}!
             </h2>
             <Button
               onClick={() => router.push("/map")}
-              className="w-full mb-2 bg-blue-500 text-white hover:bg-blue-600"
+              className="w-full mb-2 bg-pink-500 text-white hover:bg-pink-600"
             >
               Schedule Reminders
             </Button>

@@ -11,28 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-const steps = [
-    {
-      title: "Bienvenido a Nuestra Aplicación Web",
-      description: "Realizaremos un breve recorrido por las principales características de la aplicación.",
-    },
-    {
-      title: "Primer Vistazo",
-      description: "Al acceder a la página, encontrarás opciones para iniciar sesión y proceder con la configuración de tu cuenta.",
-    },
-    {
-      title: "Configuración Inicial",
-      description: "En el proceso de configuración, podrás ingresar tu ubicación de varias maneras: mediante latitud y longitud, utilizando tu ubicación actual o seleccionando un punto en el mapa. También podrás elegir cuántos días antes deseas recibir notificaciones sobre el paso de los satélites en tu área.",
-    },
-    {
-      title: "Configuración Completa",
-      description: "Una vez que completes la configuración, asegúrate de enviar los datos y seleccionar el satélite del cual deseas recibir notificaciones por correo electrónico.",
-    },
-    {
-      title: "Disfruta de la Experiencia",
-      description: "Recibirás un enlace en tu correo electrónico que te llevará al panel de control, donde encontrarás toda la información necesaria para aprovechar al máximo la aplicación.",
-    },
-  ];
+const steps = [ 
+    { title: "Welcome to Our Web Application", description: "We will take a brief tour through the main features of the application.", }, 
+    { title: "First Look", description: "Upon accessing the page, you will find options to log in and proceed with your account setup.", }, 
+    { title: "Initial Setup", description: "During the setup process, you can enter your location in several ways: by latitude and longitude, using your current location, or selecting a point on the map. You can also choose how many days in advance you want to receive notifications about satellite passes in your area.", }, 
+    { title: "Setup Complete", description: "Once you complete the setup, make sure to submit the data and select the satellite for which you want to receive email notifications.", }, { title: "Enjoy the Experience", description: "You will receive a link in your email that will take you to the dashboard, where you'll find all the necessary information to make the most of the application.", }, 
+];
   
 
 export default function AppGuide() {
