@@ -1,20 +1,11 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Login from "@/components/login/login/login";
+import NoSsr from "@/components/NoSsr";
 
 export default function Component() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempted with:", email, password);
-  };
-
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Login Section */}
+      Login Section
       <div className="flex items-center justify-center bg-black p-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
@@ -24,11 +15,12 @@ export default function Component() {
             </p>
           </div>
           <div className="flex items-center justify-center space-y-4">
-            <Login />
+            <NoSsr>
+              <Login />
+            </NoSsr>
           </div>
         </div>
       </div>
-
       {/* Welcome Section */}
       <div className="flex items-center justify-center bg-white p-8">
         <div className="max-w-md text-center">

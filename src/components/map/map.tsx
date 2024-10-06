@@ -378,7 +378,7 @@ export default function LandsatComparison() {
               }
               className="w-40 bg-pink-500 text-white hover:bg-pink-600"
             >
-              <Bell />
+              <Bell className="mr-2 h-5 w-5" />
               Notify
             </Button>
           </div>
@@ -401,7 +401,7 @@ export default function LandsatComparison() {
               }
               className="w-40 bg-pink-500 text-white hover:bg-pink-600"
             >
-              <Bell />
+              <Bell className="mr-2 h-5 w-5" />
               Notify
             </Button>
           </div>

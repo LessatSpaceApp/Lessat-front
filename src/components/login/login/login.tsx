@@ -1,25 +1,22 @@
+import { Button } from "@/components/ui/button";
 import { signIn, signOut, useSession } from "next-auth/react";
-import Button from "@/components/ui/button";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const { data: session } = useSession();
+  const router = useRouter();
   if (session) {
     return (
       <>
         Signed in as {session.user.email} <br />
         <Button onClick={() => signOut()}>Sign out</Button>
+        <Button onClick={() => router.push("/map")}>Schedule Reminders</Button>
       </>
     );
   }
   return (
     <>
-
-      <button
-        className="transform rounded-lg bg-blue-600 px-6 py-2 font-medium capitalize tracking-wide text-white transition-colors duration-300 hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80"
-        onClick={() => signIn()}
-      >
-        Sign in
-      </button>
+      <Button onClick={() => signIn()}>Sign in</Button>
     </>
   );
 }
