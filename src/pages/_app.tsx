@@ -12,6 +12,12 @@ const queryClient = new QueryClient();
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <div className={GeistSans.className}>
+        <style jsx global>{`
+        :root {
+          --font-geist-sans: ${GeistSans.variable};
+        }
+      `}
+  </style>
       <div className="pattern bg-black">
         <QueryClientProvider client={queryClient}>
           <SessionProvider>

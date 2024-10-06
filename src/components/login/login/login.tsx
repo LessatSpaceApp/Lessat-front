@@ -31,7 +31,7 @@ export default function Login() {
           <>
             <Button
               onClick={() => signIn()}
-              className="w-full text-xl  bg-pink-500 font-bold text-black hover:bg-pink-600"
+              className="w-full text-xl bg-pink-500 font-bold text-black hover:bg-pink-600"
             >
               Sign in
             </Button>

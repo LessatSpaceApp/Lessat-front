@@ -15,18 +15,13 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden space-x-4 md:flex">
-          <Link href="#" className="hover:text-[#F7B5CD]">
+          <Link href="/" className="hover:text-[#F7B5CD]">
             Home
           </Link>
-          <Link href="#" className="hover:text-[#F7B5CD]">
+          <Link href="/team" className="hover:text-[#F7B5CD]">
             Team
           </Link>
-          <Link href="#" className="hover:text-[#F7B5CD]">
-            Matches
-          </Link>
-          <Link href="#" className="hover:text-[#F7B5CD]">
-            News
-          </Link>
+  
         </div>
         <button
           className="md:hidden"
