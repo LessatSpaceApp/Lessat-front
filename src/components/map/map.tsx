@@ -7,10 +7,9 @@ import 'leaflet/dist/leaflet.css'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Crosshair, Search, MapPin, Bell, X, CheckCircle } from 'lucide-react'
-import { format } from 'date-fns'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, CheckCircle, Crosshair, Search, MapPin, Bell, X } from 'lucide-react'
+import { format } from 'date-fns'
 
 function ChangeView({ center }) {
   const map = useMap();
@@ -43,7 +42,7 @@ const customPinIcon = new L.Icon({
 })
 
 export default function LandsatComparison() {
-  const [targetLocation, setTargetLocation] = useState({ lat: 25.7617, lng: -80.1918 })
+  const [targetLocation, setTargetLocation] = useState({ lat: 25.7617, lng: -80.1918 }) // Miami coordinates
   const [locationName, setLocationName] = useState('')
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
@@ -52,9 +51,10 @@ export default function LandsatComparison() {
   const [selectedTime, setSelectedTime] = useState('')
   const [dates, setDates] = useState([])
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
-  const [showError, setShowError] = useState(false) // Estado para la alerta de error
-  const [errorMessage, setErrorMessage] = useState('') // Mensaje de error dinámico
-  const [showSuccess, setShowSuccess] = useState(false) // Estado para la alerta de éxito
+  const [showError, setShowError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [landsatData, setLandsatData] = useState({ landsat8: '', landsat9: '' })
 
   const handleSetLocation = async (e) => {
     e.preventDefault()
@@ -124,29 +124,52 @@ export default function LandsatComparison() {
   }
 
   // Function to handle sending all data as JSON
-  const handleSendData = () => {
+  const handleSendData = async () => {
     const hasCoordinates = targetLocation.lat && targetLocation.lng;
     const hasDates = dates.length > 0;
-
+  
     if (!hasCoordinates || !hasDates) {
       setErrorMessage('Debe proporcionar una ubicación y al menos una fecha.');
       setShowError(true);
+      setShowSuccess(false);
       return;
     }
-
-    const data = {
-      targetLocation,
-      dates: dates.map(date => format(date, 'yyyy-MM-dd HH:mm')),
+  
+    try {
+      const response = await fetch(`/api/next_pass?latitude=${targetLocation.lat}&longitude=${targetLocation.lng}`);
+  
+      // Verifica que la respuesta sea JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        console.log('API response:', data);
+  
+        setLandsatData({
+          landsat8: data.landsat8,
+          landsat9: data.landsat9,
+        });
+        setShowError(false);
+        setShowSuccess(true);
+      } else {
+        // Si la respuesta no es JSON, imprime el contenido
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        setErrorMessage('La API no devolvió un formato JSON válido.');
+        setShowError(true);
+        setShowSuccess(false);
+      }
+    } catch (error) {
+      console.error('Error sending data:', error);
+      setErrorMessage('Error sending data to API.');
+      setShowError(true);
+      setShowSuccess(false);
     }
-
-    console.log('Sending data as JSON:', JSON.stringify(data, null, 2));
-    setShowError(false); // Ocultar alerta de error si es que se estaba mostrando
-    setShowSuccess(true); // Mostrar la alerta de éxito
-  }
+  };
+  
 
   return (
-    <div className="flex h-screen">
-      <div className="w-2/3 relative">
+    <div className="flex flex-col lg:flex-row h-screen">
+      <div className="w-full lg:w-2/3 relative h-1/2 lg:h-full">
         <MapContainer center={[targetLocation.lat, targetLocation.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className="relative z-10">
           <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -159,7 +182,7 @@ export default function LandsatComparison() {
           <MapClickHandler onLocationChange={handleMapClick} isDropPinMode={isDropPinMode} />
         </MapContainer>
       </div>
-      <div className="w-1/3 bg-white p-4 overflow-y-auto flex flex-col space-y-4">
+      <div className="w-full bg-black lg:w-1/3 p-4 overflow-y-auto flex flex-col space-y-4">
         {showError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -171,9 +194,7 @@ export default function LandsatComparison() {
           <Alert variant="success">
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>Datos Enviados</AlertTitle>
-            <AlertDescription>
-              Los datos han sido enviados exitosamente.
-            </AlertDescription>
+            <AlertDescription>Los datos han sido enviados exitosamente.</AlertDescription>
           </Alert>
         )}
         <form onSubmit={handleSetLocation} className="space-y-2">
@@ -201,68 +222,86 @@ export default function LandsatComparison() {
               className="bg-white text-black border-pink-500 w-1/2" 
             />
           </div>
-          <div className="flex justify-between">
-            <Button type="submit" className="w-full bg-pink-500 text-white">
-              Set Location
-            </Button>
-          </div>
-        </form>
-        <div className="flex items-center space-x-2">
-          <Button onClick={getUserLocation} className="bg-pink-500 text-white">
-            Get Current Location
+          <Button type="submit" className="bg-pink-500 text-white hover:bg-pink-600 w-full">
+            <Search className="h-5 w-5 mr-2" />
+            Set Location
           </Button>
-          <Button onClick={toggleDropPinMode} className={`bg-pink-500 text-white ${isDropPinMode ? 'bg-red-500' : ''}`}>
-            {isDropPinMode ? <X className="mr-2" /> : <MapPin className="mr-2" />} {isDropPinMode ? 'Cancel Pin Drop' : 'Drop Pin'}
+        </form>
+        <div className="flex space-x-2">
+          <Button onClick={getUserLocation} className="bg-pink-500 text-white hover:bg-pink-600 flex-1">
+            <Crosshair className="h-5 w-5 mr-2" />
+            Use My Location
+          </Button>
+          <Button 
+            onClick={toggleDropPinMode} 
+            className={`bg-pink-500 text-white hover:bg-pink-600 flex-1 ${isDropPinMode ? 'ring-2 ring-white' : ''}`}
+          >
+            <MapPin className="h-5 w-5 mr-2" />
+            {isDropPinMode ? 'Cancel' : 'Drop Pin'}
           </Button>
         </div>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-pink-500 text-white w-full">Add Dates</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Dates</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleDateSubmit}>
-                  <div className="flex space-x-2">
-                    <Input 
-                      type="date" 
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="bg-white text-black border-pink-500 w-1/2" 
-                    />
-                    <Input 
-                      type="time" 
-                      value={selectedTime}
-                      onChange={(e) => setSelectedTime(e.target.value)}
-                      className="bg-white text-black border-pink-500 w-1/2" 
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-pink-500 text-white mt-2">
-                    Add Date
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <ul>
-              {dates.map((date, index) => (
-                <li key={index} className="flex justify-between items-center border-b border-gray-300 py-1">
-                  {format(date, 'yyyy-MM-dd HH:mm')}
-                  <Button onClick={() => removeDate(index)} className="bg-pink-500 text-white hover:bg-red-600 p-1">
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-center text-pink-500">Dates</h2>
+          <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
+            <DialogTrigger asChild >
+              <Button className="w-full bg-pink-500 text-white hover:bg-pink-600">
+                <Bell className="h-5 w-5 mr-2" />
+                Add Date & Time
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-white p-4">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-center text-pink-500">Add Date & Time</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleDateSubmit} className="space-y-2">
+                <Input 
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-white text-black border-pink-500 w-full" 
+                />
+                <Input 
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="bg-white text-black border-pink-500 w-full" 
+                />
+                <Button type="submit" className="w-full bg-pink-500 text-white hover:bg-pink-600">
+                  <Bell className="h-5 w-5 mr-2" />
+                  Add Date
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <ul>
+            {dates.map((date, index) => (
+              <li key={index} className="flex justify-between items-center">
+                <span>{format(date, 'yyyy-MM-dd HH:mm')}</span>
+                <Button onClick={() => removeDate(index)} className="bg-red-500 text-white hover:bg-red-600 p-1">
                   <X className="h-4 w-4" />
                 </Button>
-                </li>
-              ))}
-            </ul>
-          </div>
+              </li>
+            ))}
+          </ul>
         </div>
-        <Button onClick={handleSendData} className="w-full bg-pink-500 text-white">
+        <Button onClick={handleSendData} className="bg-pink-500 text-white hover:bg-pink-600 w-full">
           Send Data
         </Button>
+
+        {/* Mostrar datos de Landsat */}
+        {landsatData.landsat8 && (
+          <div className="space-y-2 mt-4">
+            <h3 className="text-lg font-bold">Próxima fecha Landsat 8:</h3>
+            <p>{landsatData.landsat8}</p>
+          </div>
+        )}
+        {landsatData.landsat9 && (
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold">Próxima fecha Landsat 9:</h3>
+            <p>{landsatData.landsat9}</p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
