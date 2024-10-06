@@ -12,6 +12,7 @@ export default async function handler(
     ...req.body,
     userId: session?.user.id ?? "3dc1cfa0-0ae7-4de6-949e-2355d563d6ee",
     date: new Date(req.body.date),
+    sent: false,
   });
   return res.status(200).send();
 }
