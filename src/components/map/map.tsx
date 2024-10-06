@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle, Crosshair, Search, MapPin, Bell, X } from 'lucide-react'
+import { AlertCircle, CheckCircle, Crosshair, Search, MapPin, Bell, X,SearchCheck } from 'lucide-react'
 import { format } from 'date-fns'
 
 function ChangeView({ center }) {
@@ -47,8 +47,7 @@ export default function LandsatComparison() {
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [isDropPinMode, setIsDropPinMode] = useState(false)
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
+  const [leadTime, setLeadTime] = useState('') // lead time in days
   const [dates, setDates] = useState([])
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
   const [showError, setShowError] = useState(false)
@@ -126,19 +125,18 @@ export default function LandsatComparison() {
   // Function to handle sending all data as JSON
   const handleSendData = async () => {
     const hasCoordinates = targetLocation.lat && targetLocation.lng;
-    const hasDates = dates.length > 0;
+    const hasLeadTime = leadTime !== '';
   
-    if (!hasCoordinates || !hasDates) {
-      setErrorMessage('Debe proporcionar una ubicación y al menos una fecha.');
+    if (!hasCoordinates || !hasLeadTime) {
+      setErrorMessage('Debe proporcionar una ubicación y un tiempo de anticipación.');
       setShowError(true);
       setShowSuccess(false);
       return;
     }
   
     try {
-      const response = await fetch(`/api/next_pass?latitude=${targetLocation.lat}&longitude=${targetLocation.lng}`);
+      const response = await fetch(`/api/next_pass?latitude=${targetLocation.lat}&longitude=${targetLocation.lng}&leadTime=${leadTime}`);
   
-      // Verifica que la respuesta sea JSON
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
@@ -151,7 +149,6 @@ export default function LandsatComparison() {
         setShowError(false);
         setShowSuccess(true);
       } else {
-        // Si la respuesta no es JSON, imprime el contenido
         const text = await response.text();
         console.error('Non-JSON response:', text);
         setErrorMessage('La API no devolvió un formato JSON válido.');
@@ -186,15 +183,15 @@ export default function LandsatComparison() {
         {showError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle >Error</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
         {showSuccess && (
-          <Alert variant="success">
+          <Alert variant="success ">
             <CheckCircle className="h-4 w-4" />
-            <AlertTitle>Datos Enviados</AlertTitle>
-            <AlertDescription>Los datos han sido enviados exitosamente.</AlertDescription>
+            <AlertTitle className="text-white">Datos Enviados</AlertTitle>
+            <AlertDescription className="text-white">Los datos han sido enviados exitosamente.</AlertDescription>
           </Alert>
         )}
         <form onSubmit={handleSetLocation} className="space-y-2">
@@ -241,64 +238,32 @@ export default function LandsatComparison() {
           </Button>
         </div>
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-center text-pink-500">Dates</h2>
-          <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
-            <DialogTrigger asChild >
-              <Button className="w-full bg-pink-500 text-white hover:bg-pink-600">
-                <Bell className="h-5 w-5 mr-2" />
-                Add Date & Time
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-white p-4">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-center text-pink-500">Add Date & Time</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleDateSubmit} className="space-y-2">
-                <Input 
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-white text-black border-pink-500 w-full" 
-                />
-                <Input 
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-white text-black border-pink-500 w-full" 
-                />
-                <Button type="submit" className="w-full bg-pink-500 text-white hover:bg-pink-600">
-                  <Bell className="h-5 w-5 mr-2" />
-                  Add Date
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <ul>
-            {dates.map((date, index) => (
-              <li key={index} className="flex justify-between items-center">
-                <span>{format(date, 'yyyy-MM-dd HH:mm')}</span>
-                <Button onClick={() => removeDate(index)} className="bg-red-500 text-white hover:bg-red-600 p-1">
-                  <X className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
+        <h2 className="text-2xl font-bold mb-4 text-center text-pink-500">Lead Time</h2>
+          <Input
+            type="number"
+            value={leadTime}
+            onChange={(e) => setLeadTime(e.target.value)}
+            placeholder="Enter lead time (in days)"
+            className="bg-white text-black border-pink-500 w-full"
+          />
         </div>
-        <Button onClick={handleSendData} className="bg-pink-500 text-white hover:bg-pink-600 w-full">
-          Send Data
+
+        <Button onClick={handleSendData} className="w-full bg-pink-500 text-white hover:bg-pink-600">
+          <SearchCheck className="h-5 w-5 mr-2" />
+          Get Landsat Next Pass Data
         </Button>
 
         {/* Mostrar datos de Landsat */}
         {landsatData.landsat8 && (
           <div className="space-y-2 mt-4">
-            <h3 className="text-lg font-bold">Próxima fecha Landsat 8:</h3>
-            <p>{landsatData.landsat8}</p>
+   <h2 className="text-2xl font-bold mb-4 text-center text-pink-500">Landsat 8</h2>
+   <p className="text-white text-center">{landsatData.landsat8}</p>
           </div>
         )}
         {landsatData.landsat9 && (
           <div className="space-y-2">
-            <h3 className="text-lg font-bold">Próxima fecha Landsat 9:</h3>
-            <p>{landsatData.landsat9}</p>
+                  <h2 className="text-2xl font-bold mb-4 text-center text-pink-500">Landsat 9</h2>
+                  <p className="text-white text-center">{landsatData.landsat9}</p>
           </div>
         )}
       </div>
