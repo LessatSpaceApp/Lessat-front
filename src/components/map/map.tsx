@@ -29,10 +29,12 @@ import {
   MapPin,
   Bell,
   X,
+  SearchCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
 
 function ChangeView({ center }) {
   const map = useMap();
@@ -75,8 +77,7 @@ export default function LandsatComparison() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [isDropPinMode, setIsDropPinMode] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [leadTime, setLeadTime] = useState(""); // lead time in days
   const [dates, setDates] = useState([]);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -168,10 +169,12 @@ export default function LandsatComparison() {
   // Function to handle sending all data as JSON
   const handleSendData = async () => {
     const hasCoordinates = targetLocation.lat && targetLocation.lng;
-    const hasDates = dates.length > 0;
+    const hasLeadTime = leadTime !== "";
 
-    if (!hasCoordinates || !hasDates) {
-      setErrorMessage("Debe proporcionar una ubicación y al menos una fecha.");
+    if (!hasCoordinates || !hasLeadTime) {
+      setErrorMessage(
+        "Debe proporcionar una ubicación y un tiempo de anticipación.",
+      );
       setShowError(true);
       setShowSuccess(false);
       return;
@@ -182,7 +185,6 @@ export default function LandsatComparison() {
         `/api/next_pass?latitude=${targetLocation.lat}&longitude=${targetLocation.lng}`,
       );
 
-      // Verifica que la respuesta sea JSON
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
@@ -195,7 +197,6 @@ export default function LandsatComparison() {
         setShowError(false);
         setShowSuccess(true);
       } else {
-        // Si la respuesta no es JSON, imprime el contenido
         const text = await response.text();
         console.error("Non-JSON response:", text);
         setErrorMessage("La API no devolvió un formato JSON válido.");
@@ -209,6 +210,8 @@ export default function LandsatComparison() {
       setShowSuccess(false);
     }
   };
+
+  const { toast } = useToast();
 
   const setNotificationMutation = useMutation({
     mutationFn: async ({
@@ -230,6 +233,11 @@ export default function LandsatComparison() {
         time,
         lead,
         satellite,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notificación programada",
       });
     },
   });
@@ -271,10 +279,10 @@ export default function LandsatComparison() {
           </Alert>
         )}
         {showSuccess && (
-          <Alert variant="success">
+          <Alert variant="success ">
             <CheckCircle className="h-4 w-4" />
-            <AlertTitle>Datos Enviados</AlertTitle>
-            <AlertDescription>
+            <AlertTitle className="text-white">Datos Enviados</AlertTitle>
+            <AlertDescription className="text-white">
               Los datos han sido enviados exitosamente.
             </AlertDescription>
           </Alert>
@@ -332,63 +340,23 @@ export default function LandsatComparison() {
         </div>
         <div>
           <h2 className="mb-4 text-center text-2xl font-bold text-pink-500">
-            Dates
+            Lead Time
           </h2>
-          <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full bg-pink-500 text-white hover:bg-pink-600">
-                <Bell className="mr-2 h-5 w-5" />
-                Add Date & Time
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-white p-4">
-              <DialogHeader>
-                <DialogTitle className="text-center text-2xl font-bold text-pink-500">
-                  Add Date & Time
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleDateSubmit} className="space-y-2">
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full border-pink-500 bg-white text-black"
-                />
-                <Input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full border-pink-500 bg-white text-black"
-                />
-                <Button
-                  type="submit"
-                  className="w-full bg-pink-500 text-white hover:bg-pink-600"
-                >
-                  <Bell className="mr-2 h-5 w-5" />
-                  Add Date
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <ul>
-            {dates.map((date, index) => (
-              <li key={index} className="flex items-center justify-between">
-                <span>{format(date, "yyyy-MM-dd HH:mm")}</span>
-                <Button
-                  onClick={() => removeDate(index)}
-                  className="bg-red-500 p-1 text-white hover:bg-red-600"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <Input
+            type="number"
+            value={leadTime}
+            onChange={(e) => setLeadTime(e.target.value)}
+            placeholder="Enter lead time (in days)"
+            className="w-full border-pink-500 bg-white text-black"
+          />
         </div>
+
         <Button
           onClick={handleSendData}
           className="w-full bg-pink-500 text-white hover:bg-pink-600"
         >
-          Obtener fechas
+          <SearchCheck className="mr-2 h-5 w-5" />
+          Get Landsat Next Pass Data
         </Button>
 
         {/* Mostrar datos de Landsat */}
@@ -399,17 +367,19 @@ export default function LandsatComparison() {
               <p>{landsatData.landsat8}</p>
             </div>
             <Button
-              onClick={setNotificationMutation.mutate({
-                latitude,
-                longitude,
-                lead,
-                satellite: "landsat_8",
-                time: time,
-              })}
+              onClick={() =>
+                setNotificationMutation.mutate({
+                  latitude,
+                  longitude,
+                  lead: parseFloat(leadTime),
+                  satellite: "landsat_8",
+                  time: new Date(landsatData.landsat8).getTime(),
+                })
+              }
               className="w-40 bg-pink-500 text-white hover:bg-pink-600"
             >
               <Bell />
-              Notificar
+              Notify
             </Button>
           </div>
         )}
@@ -420,11 +390,19 @@ export default function LandsatComparison() {
               <p>{landsatData.landsat9}</p>
             </div>
             <Button
-              onClick={handleSendData}
+              onClick={() =>
+                setNotificationMutation.mutate({
+                  latitude,
+                  longitude,
+                  lead: parseFloat(leadTime),
+                  satellite: "landsat_9",
+                  time: new Date(landsatData.landsat9).getTime(),
+                })
+              }
               className="w-40 bg-pink-500 text-white hover:bg-pink-600"
             >
               <Bell />
-              Notificar
+              Notify
             </Button>
           </div>
         )}

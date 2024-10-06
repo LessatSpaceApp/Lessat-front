@@ -9,6 +9,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  console.log("Query")
+try{
   const query = await axios.request<NimbusResponse>({
     method: "get",
     url: `https://nimbus.cr.usgs.gov/arcgis/rest/services/LLook_Outlines/MapServer/1/query?where=MODE=%27D%27&geometry=${req.query.latitude},%20${req.query.longitude}&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=false&returnTrueCurves=false&returnIdsOnly=false&returnCountOnly=false&returnZ=false&returnM=false&returnDistinctValues=false&f=json`,
@@ -17,6 +19,7 @@ export default async function handler(
     method: "get",
     url: "https://landsat.usgs.gov/sites/default/files/landsat_acq/assets/json/cycles_full.json",
   });
+    
 
   // const row = query.data.features[0]?.attributes.ROW;
   const path = query.data.features[0]?.attributes.PATH;
@@ -30,4 +33,11 @@ export default async function handler(
   });
 
   return res.status(200).json({ landsat8: ls8[0], landsat9: ls9[0] });
+}
+catch (error){
+  console.error(error)
+  console.log(error.message)
+  return res.status(500).json("")
+}
+
 }
