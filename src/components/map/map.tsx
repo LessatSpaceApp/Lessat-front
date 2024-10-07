@@ -37,7 +37,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 
-function ChangeView({ center }) {
+function ChangeView({ center }: any) {
   const map = useMap();
   useEffect(() => {
     map.setView(center);
@@ -45,7 +45,7 @@ function ChangeView({ center }) {
   return null;
 }
 
-function MapClickHandler({ onLocationChange, isDropPinMode }) {
+function MapClickHandler({ onLocationChange, isDropPinMode }: any) {
   useMapEvents({
     click(e) {
       if (isDropPinMode) {
@@ -90,8 +90,7 @@ export default function LandsatComparison() {
   });
   const [isLoadingLocation, setIsLoadingLocation] = useState(false); // Loading state
 
-
-  const handleSetLocation = async (e) => {
+  const handleSetLocation = async (e: any) => {
     e.preventDefault();
     if (latitude && longitude) {
       const lat = parseFloat(latitude);
@@ -146,12 +145,11 @@ export default function LandsatComparison() {
     }
   };
 
-
   const toggleDropPinMode = () => {
     setIsDropPinMode(!isDropPinMode);
   };
 
-  const handleMapClick = (latlng) => {
+  const handleMapClick = (latlng: any) => {
     if (isDropPinMode) {
       setTargetLocation(latlng);
       setIsDropPinMode(false);
@@ -161,15 +159,7 @@ export default function LandsatComparison() {
     }
   };
 
-  const handleDateSubmit = (e) => {
-    e.preventDefault();
-    const newDate = new Date(`${selectedDate}T${selectedTime}`);
-    setDates([...dates, newDate]);
-    setSelectedDate("");
-    setSelectedTime("");
-  };
-
-  const removeDate = (index) => {
+  const removeDate = (index: any) => {
     setDates(dates.filter((_, i) => i !== index));
   };
 
@@ -193,7 +183,7 @@ export default function LandsatComparison() {
       );
 
       const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
+      if (contentType?.includes("application/json")) {
         const data = await response.json();
         console.log("API response:", data);
 
@@ -258,26 +248,29 @@ export default function LandsatComparison() {
 
   return (
     <div className="flex h-screen flex-col lg:flex-row">
-    <div className="relative h-1/2 w-full lg:h-full lg:w-2/3">
-      <MapContainer
-        center={[targetLocation.lat, targetLocation.lng]}
-        zoom={13}
-        style={{ height: "100%", width: "100%" }}
-        zoomControl={false}
-        className="relative z-10"
-      >
-        <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
-          <Popup>
-            Target Location <br />
-            Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
-          </Popup>
-        </Marker>
-      </MapContainer>
-    </div>
+      <div className="relative h-1/2 w-full lg:h-full lg:w-2/3">
+        <MapContainer
+          center={[targetLocation.lat, targetLocation.lng]}
+          zoom={13}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+          className="relative z-10"
+        >
+          <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <Marker
+            position={[targetLocation.lat, targetLocation.lng]}
+            icon={customPinIcon}
+          >
+            <Popup>
+              Target Location <br />
+              Lat: {targetLocation.lat.toFixed(4)}, Lng:{" "}
+              {targetLocation.lng.toFixed(4)}
+            </Popup>
+          </Marker>
+        </MapContainer>
+      </div>
 
-      
       <div className="flex w-full flex-col space-y-4 overflow-y-auto bg-black p-4 lg:w-1/3">
         {showError && (
           <Alert variant="destructive">
@@ -287,7 +280,7 @@ export default function LandsatComparison() {
           </Alert>
         )}
         {showSuccess && (
-          <Alert variant="success ">
+          <Alert>
             <CheckCircle className="h-4 w-4" />
             <AlertTitle className="text-white">Datos Enviados</AlertTitle>
             <AlertDescription className="text-white">
@@ -331,21 +324,23 @@ export default function LandsatComparison() {
           </Button>
         </form>
         <div className="flex space-x-2">
+          <Button
+            onClick={getUserLocation}
+            className="flex-1 bg-pink-500 text-white hover:bg-pink-600"
+          >
+            {isLoadingLocation ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Getting Location...
+              </>
+            ) : (
+              <>
+                <Crosshair className="mr-2 h-5 w-5" />
+                Use My Location
+              </>
+            )}
+          </Button>
 
-        <Button onClick={getUserLocation} className="flex-1 bg-pink-500 text-white hover:bg-pink-600">
-          {isLoadingLocation ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Getting Location...
-            </>
-          ) : (
-            <>
-              <Crosshair className="mr-2 h-5 w-5" />
-              Use My Location
-            </>
-          )}
-        </Button>
- 
           <Button
             onClick={toggleDropPinMode}
             className={`flex-1 bg-pink-500 text-white hover:bg-pink-600 ${isDropPinMode ? "ring-2 ring-white" : ""}`}

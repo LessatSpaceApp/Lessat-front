@@ -78,7 +78,7 @@ Prepare to take measurements.
       subject = `Data from ${details.satellite}`;
       text = `The data from ${details.satellite} is already available!
 
-Check it out here: ${"example url"}
+Check it out here: https://7c92-191-82-95-178.ngrok-free.app/fullAnswer/
 `;
       break;
     default:
