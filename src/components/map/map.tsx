@@ -252,24 +252,29 @@ export default function LandsatComparison() {
   return (
     <div className="flex h-screen flex-col lg:flex-row">
     <div className="relative h-1/2 w-full lg:h-full lg:w-2/3">
-      <MapContainer
-        center={[targetLocation.lat, targetLocation.lng]}
-        zoom={13}
-        style={{ height: "100%", width: "100%" }}
-        zoomControl={false}
-        className="relative z-10"
-      >
-        <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
-          <Popup>
-            Target Location <br />
-            Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
-          </Popup>
-        </Marker>
-      </MapContainer>
-    </div>
+  <MapContainer
+    center={[targetLocation.lat, targetLocation.lng]}
+    zoom={13}
+    style={{ height: "100%", width: "100%" }}
+    zoomControl={false}
+    className="relative z-10"
+  >
+    <ChangeView center={[targetLocation.lat, targetLocation.lng]} />
+    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <Marker position={[targetLocation.lat, targetLocation.lng]} icon={customPinIcon}>
+      <Popup>
+        Target Location <br />
+        Lat: {targetLocation.lat.toFixed(4)}, Lng: {targetLocation.lng.toFixed(4)}
+      </Popup>
+    </Marker>
 
+    {/* MapClickHandler para detectar clicks en el mapa */}
+    <MapClickHandler
+      onLocationChange={handleMapClick}  // Esto actualiza la ubicación con el clic
+      isDropPinMode={isDropPinMode}  // Solo activa cuando el modo de "drop pin" está activado
+    />
+  </MapContainer>
+</div>
       
       <div className="flex w-full flex-col space-y-4 overflow-y-auto bg-black p-4 lg:w-1/3">
         {showError && (
@@ -372,7 +377,7 @@ export default function LandsatComparison() {
         {landsatData.landsat8 && (
           <div className="mt-4 flex w-full items-center justify-between space-y-2 text-white">
             <div className="flex flex-col">
-              <h3 className="text-lg font-bold">Próxima fecha Landsat 8:</h3>
+              <h3 className="text-lg font-bold">Next date Landsat 8:</h3>
               <p>{landsatData.landsat8}</p>
             </div>
             <Button
@@ -395,7 +400,7 @@ export default function LandsatComparison() {
         {landsatData.landsat9 && (
           <div className="mt-4 flex w-full items-center justify-between space-y-2 text-white">
             <div className="flex flex-col">
-              <h3 className="text-lg font-bold">Próxima fecha Landsat 9:</h3>
+              <h3 className="text-lg font-bold">Next date Landsat 9:</h3>
               <p>{landsatData.landsat9}</p>
             </div>
             <Button
