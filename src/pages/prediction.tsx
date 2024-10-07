@@ -1,5 +1,6 @@
 import NoSsr from "@/components/NoSsr";
-import { Pass, type SatQueryRes } from "@/types/sat-query";
+import { timeConverter } from "@/lib/utils";
+import type { Pass } from "@/types/sat-query";
 import { useQuery } from "@tanstack/react-query";
 import { useGeolocation } from "@uidotdev/usehooks";
 import axios from "axios";
@@ -22,44 +23,22 @@ export default function Prediction() {
 
   return (
     <NoSsr>
-      <>
+      <div className="bg-white">
         <p>{JSON.stringify(state, undefined, 4)}</p>
         <br />
         <h1>loading: {sateliteQuery.status}</h1>
         <p>{sateliteQuery.data?.length}</p>
-        {sateliteQuery.data?.map((p, i) => (
-          <p key={i}>
-            {timeConverter(p.startUTC)} - {p.duration} - {p.sat}
-          </p>
-        ))}
-      </>
+        {sateliteQuery.data
+          ?.filter(
+            (p) => Math.abs(p.startUTC * 1000 - Date.now()) < 12 * 3600 * 1000,
+          )
+          .slice(0, 1)
+          .map((p, i) => (
+            <p key={i}>
+              {timeConverter(p.startUTC)} - {JSON.stringify(p)}
+            </p>
+          ))}
+      </div>
     </NoSsr>
   );
-}
-
-function timeConverter(UNIX_timestamp) {
-  var a = new Date(UNIX_timestamp * 1000);
-  var months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  var year = a.getFullYear();
-  var month = months[a.getMonth()];
-  var date = a.getDate();
-  var hour = a.getHours();
-  var min = a.getMinutes();
-  var sec = a.getSeconds();
-  var time =
-    date + " " + month + " " + year + " " + hour + ":" + min + ":" + sec;
-  return time;
 }
