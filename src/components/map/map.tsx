@@ -268,6 +268,12 @@ export default function LandsatComparison() {
               {targetLocation.lng.toFixed(4)}
             </Popup>
           </Marker>
+
+          {/* MapClickHandler para detectar clicks en el mapa */}
+          <MapClickHandler
+            onLocationChange={handleMapClick} // Esto actualiza la ubicación con el clic
+            isDropPinMode={isDropPinMode} // Solo activa cuando el modo de "drop pin" está activado
+          />
         </MapContainer>
       </div>
 
@@ -374,7 +380,7 @@ export default function LandsatComparison() {
         {landsatData.landsat8 && (
           <div className="mt-4 flex w-full items-center justify-between space-y-2 text-white">
             <div className="flex flex-col">
-              <h3 className="text-lg font-bold">Próxima fecha Landsat 8:</h3>
+              <h3 className="text-lg font-bold">Next date Landsat 8:</h3>
               <p>{landsatData.landsat8}</p>
             </div>
             <Button
@@ -397,7 +403,7 @@ export default function LandsatComparison() {
         {landsatData.landsat9 && (
           <div className="mt-4 flex w-full items-center justify-between space-y-2 text-white">
             <div className="flex flex-col">
-              <h3 className="text-lg font-bold">Próxima fecha Landsat 9:</h3>
+              <h3 className="text-lg font-bold">Next date Landsat 9:</h3>
               <p>{landsatData.landsat9}</p>
             </div>
             <Button
